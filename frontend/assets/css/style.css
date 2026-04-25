@@ -1,0 +1,60 @@
+:root {
+    --galaxy-orange: #ff9d00;
+    --bg-dark: #0b0e11;
+    --card-bg: #1a1d23;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Hiệu ứng chuyển màn hình */
+#app-container {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tùy chỉnh các nút bấm */
+.btn-warning {
+    background-color: var(--galaxy-orange);
+    border: none;
+    font-weight: bold;
+}
+
+/* Sơ đồ ghế */
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.seat {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.seat:hover { transform: scale(1.15); box-shadow: 0 0 15px var(--galaxy-orange); }
+.status-0 { background-color: #fff; }
+.status-1 { background-color: var(--galaxy-orange); pointer-events: none; }
+.status-2 { background-color: #444; pointer-events: none; opacity: 0.5; }
+
+/* Màn hình rạp phim 3D */
+.cinema-screen {
+    background: linear-gradient(to bottom, #fff, #444);
+    height: 8px;
+    width: 80%;
+    margin: 0 auto 40px;
+    border-radius: 5px;
+    box-shadow: 0 5px 20px rgba(255,255,255,0.3);
+}
