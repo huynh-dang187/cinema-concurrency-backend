@@ -3,35 +3,696 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxy Vibe Cinema - Hệ thống đặt vé</title>
+    <title>Admin Cinema Kiosk - Đặt Vé Xem Phim</title>
     
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="assets/style.css">
     
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container-main {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-panel h3 {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .control-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .control-item label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check-input {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-select {
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .cinema-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .cinema-section h3 {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .cinema-screen {
+            background: linear-gradient(180deg, #333 0%, #555 100%);
+            width: 100%;
+            height: 40px;
+            border-radius: 50% 50% 0 0;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .seats-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .seat {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            background: white;
+            color: #333;
+        }
+
+        .seat.empty {
+            background: #ffffff;
+            border-color: #ddd;
+            color: #666;
+        }
+
+        .seat.empty:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+
+        .seat.holding {
+            background: #ffc107;
+            border-color: #ff9800;
+            color: white;
+            cursor: not-allowed;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .seat.sold {
+            background: #6c757d;
+            border-color: #495057;
+            color: white;
+            cursor: not-allowed;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .seat.my-selected {
+            background: #28a745;
+            border-color: #20c997;
+            color: white;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+            transform: scale(1.08);
+        }
+
+        .seat-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+
+        .legend-box.empty {
+            background: white;
+        }
+
+        .legend-box.holding {
+            background: #ffc107;
+            border-color: #ff9800;
+        }
+
+        .legend-box.sold {
+            background: #6c757d;
+            border-color: #495057;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-custom {
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hold {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-hold:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-hold:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-payment {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-payment:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-payment:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .log-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .log-section h3 {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #logArea {
+            width: 100%;
+            height: 250px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 6px;
+            padding: 15px;
+            border: 2px solid #333;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-y: auto;
+            resize: vertical;
+        }
+
+        .log-clear {
+            margin-top: 10px;
+        }
+
+        .toast-container-custom {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast-notification {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast-notification.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .toast-notification.error {
+            border-left: 4px solid #dc3545;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .control-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .seats-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+            .seats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary sticky-top">
-        <div class="container">
-            <a class="navbar-brand text-warning fw-bold" href="#/home">GALAXY VIBE</a>
-            <div class="d-flex">
-                <a href="#/history" class="btn btn-outline-light btn-sm me-2">Lịch sử</a>
-                <a href="#/admin-stats" class="btn btn-outline-danger btn-sm">Admin</a>
+<div class="container-main">
+    <div class="control-panel">
+        <h3><i class="fas fa-sliders-h"></i> Bảng Điều Khiển</h3>
+        
+        <div class="control-grid">
+            <div class="control-item">
+                <label><i class="fas fa-lock"></i> Cơ chế Chống Tương Tranh</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="chkSafeMode">
+                    <label class="form-check-label" for="chkSafeMode">
+                        Bật UPDLOCK (Pessimistic Lock)
+                    </label>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    Tắt: Dễ bị Lost Update | Bật: Bảo vệ an toàn
+                </small>
+            </div>
+
+            <div class="control-item">
+                <label><i class="fas fa-exclamation-triangle"></i> Giả Lập Lỗi</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="chkSimulateError">
+                    <label class="form-check-label" for="chkSimulateError">
+                        Giả lập lỗi Thanh Toán
+                    </label>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    Để test Rollback Transaction
+                </small>
+            </div>
+
+            <div class="control-item">
+                <label><i class="fas fa-user-circle"></i> Vai Trò</label>
+                <select id="roleSelect" class="form-select">
+                    <option value="1" selected>Tôi là Khách A</option>
+                    <option value="2">Tôi là Khách B</option>
+                </select>
+                <small class="text-muted d-block mt-2">
+                    Chọn vai trò để test Concurrency
+                </small>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <main id="app-container" class="container py-4">
-        <div class="text-center mt-5">
-            <div class="spinner-border text-warning" role="status"></div>
-            <p class="mt-2">Đang khởi tạo hệ thống...</p>
+    <div class="cinema-section">
+        <h3><i class="fas fa-film"></i> Rạp Chiếu Phim (Lưới Ghế 8x8)</h3>
+        
+        <div class="cinema-screen">🎬 MÀN HÌNH 🎬</div>
+        
+        <div class="seats-grid" id="seatsGrid">
         </div>
-    </main>
 
-    <script src="js/api.js"></script>
-    <script src="js/store.js"></script>
-    <script type="module" src="js/app.js"></script>
+        <div class="seat-legend">
+            <div class="legend-item">
+                <div class="legend-box empty"></div>
+                <span>Trống (Có thể chọn)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box holding"></div>
+                <span>Đang Giữ (Khóa)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box sold"></div>
+                <span>Đã Bán</span>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-custom btn-hold" id="btnHold" disabled>
+                <i class="fas fa-lock"></i> Giữ Ghế
+            </button>
+            <button class="btn-custom btn-payment" id="btnPayment" disabled>
+                <i class="fas fa-credit-card"></i> Thanh Toán
+            </button>
+            <button class="btn-custom btn-reset" id="btnReset">
+                <i class="fas fa-redo"></i> Làm Mới
+            </button>
+        </div>
+    </div>
+
+    <div class="log-section">
+        <h3><i class="fas fa-terminal"></i> Nhật Ký Hành Động (Console Log)</h3>
+        <textarea id="logArea" readonly></textarea>
+        <button class="btn btn-outline-danger btn-sm log-clear" id="btnClearLog">
+            <i class="fas fa-trash"></i> Xóa Nhật Ký
+        </button>
+    </div>
+
+</div>
+
+<div class="toast-container-custom" id="toastContainer"></div>
+
+<script>
+    const state = {
+        currentUserID: 1,
+        selectedSeatID: null,
+        selectedSeatName: null,
+        isSafeMode: false,
+        simulateError: false,
+        seats: [],
+        isLoading: false
+    };
+
+    const API_URL = 'http://localhost:3000/api';
+
+    const chkSafeMode = document.getElementById('chkSafeMode');
+    const chkSimulateError = document.getElementById('chkSimulateError');
+    const roleSelect = document.getElementById('roleSelect');
+    const seatsGrid = document.getElementById('seatsGrid');
+    const btnHold = document.getElementById('btnHold');
+    const btnPayment = document.getElementById('btnPayment');
+    const btnReset = document.getElementById('btnReset');
+    const logArea = document.getElementById('logArea');
+    const btnClearLog = document.getElementById('btnClearLog');
+    const toastContainer = document.getElementById('toastContainer');
+
+    function log(message, type = 'info') {
+        const now = new Date().toLocaleTimeString();
+        const prefix = { 'info': '📋', 'success': '✓', 'error': '❌', 'warning': '⚠️' }[type] || '•';
+        const logMessage = `[${now}] ${prefix} ${message}`;
+        logArea.value += logMessage + '\n';
+        logArea.scrollTop = logArea.scrollHeight;
+        console.log(logMessage);
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${type}`;
+        toast.innerHTML = `
+            <strong>${type === 'success' ? '✓ Thành công!' : type === 'error' ? '❌ Lỗi!' : 'ℹ️ Thông tin'}</strong>
+            <p style="margin: 8px 0 0 0; font-size: 14px;">${message}</p>
+        `;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    async function fetchSeats() {
+        try {
+            log('Tải danh sách ghế từ server...', 'info');
+            const response = await fetch(`${API_URL}/seats`);
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            state.seats = await response.json();
+            log(`Tải thành công ${state.seats.length} ghế`, 'success');
+            renderSeats();
+        } catch (error) {
+            log(`Lỗi tải ghế: ${error.message}`, 'error');
+            showToast(`Không thể tải danh sách ghế: ${error.message}`, 'error');
+        }
+    }
+
+    function renderSeats() {
+        seatsGrid.innerHTML = '';
+        state.seats.forEach(seat => {
+            const seatEl = document.createElement('div');
+            seatEl.className = 'seat';
+            seatEl.dataset.seatId = seat.SeatID;
+            seatEl.dataset.status = seat.Status;
+            seatEl.textContent = seat.SeatName;
+
+            if (seat.Status === 0) {
+                seatEl.classList.add('empty');
+                seatEl.addEventListener('click', () => selectSeat(seat.SeatID, seat.SeatName));
+            } else if (seat.Status === 1) {
+                seatEl.classList.add('holding');
+            } else if (seat.Status === 2) {
+                seatEl.classList.add('sold');
+            }
+
+            seatsGrid.appendChild(seatEl);
+        });
+        log('Giao diện ghế được cập nhật', 'info');
+    }
+
+    function selectSeat(seatID, seatName) {
+        document.querySelectorAll('.seat.my-selected').forEach(el => {
+            el.classList.remove('my-selected');
+        });
+        state.selectedSeatID = seatID;
+        state.selectedSeatName = seatName;
+        document.querySelector(`[data-seat-id="${seatID}"]`).classList.add('my-selected');
+        btnHold.disabled = false;
+        log(`Đã chọn ghế: ${seatName} (ID: ${seatID})`, 'info');
+    }
+
+    async function holdSeat() {
+        if (!state.selectedSeatID) {
+            showToast('Vui lòng chọn một ghế!', 'warning');
+            return;
+        }
+        state.isLoading = true;
+        btnHold.disabled = true;
+        try {
+            log(`🔄 Đang gọi API /api/hold... (SafeMode: ${state.isSafeMode})`, 'info');
+            const response = await fetch(`${API_URL}/hold`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seatId: state.selectedSeatID,
+                    userId: state.currentUserID,
+                    isSafeMode: state.isSafeMode
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `HTTP Error: ${response.status}`);
+            log(`✓ Ghế ${state.selectedSeatName} được giữ thành công!`, 'success');
+            showToast('Ghế được giữ thành công! Hãy thanh toán.', 'success');
+            const seatEl = document.querySelector(`[data-seat-id="${state.selectedSeatID}"]`);
+            seatEl.classList.remove('empty', 'my-selected');
+            seatEl.classList.add('holding');
+            seatEl.style.pointerEvents = 'none';
+            btnPayment.disabled = false;
+            btnHold.disabled = true;
+        } catch (error) {
+            log(`❌ Lỗi giữ ghế: ${error.message}`, 'error');
+            showToast(`Không thể giữ ghế: ${error.message}`, 'error');
+            btnHold.disabled = false;
+        } finally {
+            state.isLoading = false;
+        }
+    }
+
+    async function payment() {
+        if (!state.selectedSeatID) {
+            showToast('Vui lòng chọn một ghế!', 'warning');
+            return;
+        }
+        state.isLoading = true;
+        btnPayment.disabled = true;
+        try {
+            log(`🔄 Đang gọi API /api/payment... (SimulateError: ${state.simulateError})`, 'info');
+            const response = await fetch(`${API_URL}/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    seatId: state.selectedSeatID,
+                    userId: state.currentUserID,
+                    simulateError: state.simulateError
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `HTTP Error: ${response.status}`);
+            log(`✓ Thanh toán ghế ${state.selectedSeatName} thành công!`, 'success');
+            showToast('Thanh toán thành công! Vé của bạn đã lưu.', 'success');
+            const seatEl = document.querySelector(`[data-seat-id="${state.selectedSeatID}"]`);
+            seatEl.classList.remove('holding');
+            seatEl.classList.add('sold');
+            seatEl.style.pointerEvents = 'none';
+            state.selectedSeatID = null;
+            state.selectedSeatName = null;
+            btnPayment.disabled = true;
+            btnHold.disabled = true;
+        } catch (error) {
+            log(`❌ Lỗi thanh toán: ${error.message}`, 'error');
+            showToast(`Thanh toán thất bại: ${error.message}`, 'error');
+            btnPayment.disabled = false;
+        } finally {
+            state.isLoading = false;
+        }
+    }
+
+    function reset() {
+        state.selectedSeatID = null;
+        state.selectedSeatName = null;
+        document.querySelectorAll('.seat.my-selected').forEach(el => {
+            el.classList.remove('my-selected');
+        });
+        btnHold.disabled = true;
+        btnPayment.disabled = true;
+        log('Đã làm mới. Chọn ghế mới để tiếp tục.', 'info');
+        showToast('Đã làm mới!', 'info');
+    }
+
+    chkSafeMode.addEventListener('change', (e) => {
+        state.isSafeMode = e.target.checked;
+        log(`Chế độ an toàn: ${state.isSafeMode ? 'BẬT' : 'TẮT'}`, 'info');
+    });
+
+    chkSimulateError.addEventListener('change', (e) => {
+        state.simulateError = e.target.checked;
+        log(`Giả lập lỗi: ${state.simulateError ? 'BẬT' : 'TẮT'}`, 'info');
+    });
+
+    roleSelect.addEventListener('change', (e) => {
+        state.currentUserID = parseInt(e.target.value);
+        log(`Đã chuyển sang: Khách ${state.currentUserID === 1 ? 'A' : 'B'} (UserID: ${state.currentUserID})`, 'info');
+        reset();
+    });
+
+    btnHold.addEventListener('click', holdSeat);
+    btnPayment.addEventListener('click', payment);
+    btnReset.addEventListener('click', reset);
+    btnClearLog.addEventListener('click', () => {
+        logArea.value = '';
+        log('Nhật ký được xóa', 'info');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        log('═══════════════════════════════════════════', 'info');
+        log('   ADMIN CINEMA KIOSK ĐANG HOẠT ĐỘNG', 'info');
+        log('═══════════════════════════════════════════', 'info');
+        log('Kết nối đến server: ' + API_URL, 'info');
+        fetchSeats();
+        setInterval(fetchSeats, 5000);
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
