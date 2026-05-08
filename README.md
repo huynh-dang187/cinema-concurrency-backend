@@ -1,7 +1,6 @@
 # 🎬 CINEMA CONCURRENCY & TRANSACTION DEMO
 
 ## 📌 Giới Thiệu
-
 Đây là **hệ thống quản lý đặt vé rạp chiếu phim** tập trung vào:
 - ✓ **Concurrency Control** (Kiểm soát tương tranh)
 - ✓ **Transaction Management** (Quản lý giao dịch)
@@ -43,22 +42,17 @@ npm install
 
 ### Bước 3: Cấu hình SQL Server Connection
 
-Mở `server.js`, tìm dòng:
+Tạo file `.env` tại thư mục gốc dự án (cùng cấp `server.js`):
 
-```javascript
-const sqlConfig = {
-    server: 'localhost',
-    database: 'CinemaDB',
-    authentication: {
-        type: 'default',
-        options: {
-            userName: 'sa',              // ← Đổi username của bạn
-            password: 'YourPassword123'  // ← Đổi password của bạn
-        }
-    },
-    ...
-};
+```env
+SQL_SERVER=localhost
+SQL_DATABASE=CinemaDB
+SQL_USER=sa
+SQL_PASSWORD=YourPassword123
+PORT=3000
 ```
+
+Lưu ý: Không commit `.env` lên git.
 
 ### Bước 4: Khởi động Server
 
@@ -76,10 +70,13 @@ npm start
 file:///d:/Nam_3/Hệ Quản Trị CSDL/Demo_TL/cinema-concurrency-backend/frontend/index.html
 
 # Cách 2: Dùng Python Simple Server
-cd frontend
-python -m http.server 8000
-# Rồi truy cập http://localhost:8000/index.html
+python -m http.server 8000 -d frontend
+# Rồi truy cập http://localhost:8000/
 ```
+
+Ghi chú realtime:
+- Frontend mặc định có polling 5s để fallback.
+- Khi backend chạy, frontend sẽ tự bật realtime bằng Socket.IO và tắt polling.
 
 ---
 

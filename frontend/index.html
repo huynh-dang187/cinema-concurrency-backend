@@ -478,6 +478,9 @@
 
 <div class="toast-container-custom" id="toastContainer"></div>
 
+<!-- Socket.IO client (realtime updates from backend) -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
 <script>
     const state = {
         currentUserID: 1,
@@ -501,6 +504,9 @@
     const logArea = document.getElementById('logArea');
     const btnClearLog = document.getElementById('btnClearLog');
     const toastContainer = document.getElementById('toastContainer');
+
+    let seatsPollTimer = null;
+    let socket = null;
 
     function log(message, type = 'info') {
         const now = new Date().toLocaleTimeString();
@@ -534,6 +540,52 @@
             log(`Lỗi tải ghế: ${error.message}`, 'error');
             showToast(`Không thể tải danh sách ghế: ${error.message}`, 'error');
         }
+    }
+
+    function startSeatsPolling() {
+        if (seatsPollTimer) return;
+        seatsPollTimer = setInterval(fetchSeats, 5000);
+        log('Polling: bật reload ghế mỗi 5s', 'info');
+    }
+
+    function stopSeatsPolling() {
+        if (!seatsPollTimer) return;
+        clearInterval(seatsPollTimer);
+        seatsPollTimer = null;
+        log('Polling: tắt (đang dùng realtime)', 'info');
+    }
+
+    function startRealtime() {
+        if (typeof io === 'undefined') {
+            log('Realtime: Socket.IO client chưa tải - dùng polling', 'warning');
+            startSeatsPolling();
+            return;
+        }
+
+        socket = io('http://localhost:3000', {
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => {
+            log(`Realtime: đã kết nối (${socket.id})`, 'success');
+            showToast('Đã bật realtime (Socket.IO)', 'success');
+            stopSeatsPolling();
+        });
+
+        socket.on('disconnect', (reason) => {
+            log(`Realtime: mất kết nối (${reason}) - quay về polling`, 'warning');
+            startSeatsPolling();
+        });
+
+        socket.on('connect_error', (err) => {
+            log(`Realtime: lỗi kết nối - ${err.message} (dùng polling)`, 'warning');
+            startSeatsPolling();
+        });
+
+        socket.on('seats:update', (seats) => {
+            state.seats = seats;
+            renderSeats();
+        });
     }
 
     function renderSeats() {
@@ -692,7 +744,8 @@
         log('═══════════════════════════════════════════', 'info');
         log('Kết nối đến server: ' + API_URL, 'info');
         fetchSeats();
-        setInterval(fetchSeats, 5000);
+        startSeatsPolling();
+        startRealtime();
     });
 </script>
 

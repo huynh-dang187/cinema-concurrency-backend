@@ -6,11 +6,26 @@
 
 require('dotenv').config();  // Load .env file
 
+const http = require('http');
 const express = require('express');
 const sql = require('mssql');
 const cors = require('cors');
 
+const { Server: SocketIOServer } = require('socket.io');
+
 const app = express();
+
+// HTTP server (needed for Socket.IO)
+const httpServer = http.createServer(app);
+
+// Socket.IO server (realtime seat updates)
+const io = new SocketIOServer(httpServer, {
+    cors: {
+        origin: ['http://localhost:3000', 'http://localhost:8000'],
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
 
 // ============================================================================
 // CONFIGURATION
@@ -63,17 +78,73 @@ const logger = {
 
 let pool = null;
 
+async function fetchSeatsForShowTime(showTimeId = 1) {
+    if (!pool) {
+        throw new Error('Database not connected');
+    }
+
+    const request = pool.request();
+    request.input('ShowTimeID', sql.Int, showTimeId);
+    const result = await request.query(`
+        SELECT 
+            S.SeatID,
+            S.SeatName,
+            S.[Status],
+            S.UserIDHeld,
+            U.UserName,
+            ST.MovieName,
+            ST.ShowTimeID
+        FROM Seats S
+        LEFT JOIN Users U ON S.UserIDHeld = U.UserID
+        LEFT JOIN ShowTimes ST ON S.ShowTimeID = ST.ShowTimeID
+        WHERE ST.ShowTimeID = @ShowTimeID
+        ORDER BY S.SeatID
+    `);
+
+    return result.recordset;
+}
+
+async function broadcastSeatsUpdate(showTimeId = 1) {
+    try {
+        const seats = await fetchSeatsForShowTime(showTimeId);
+        io.emit('seats:update', seats);
+        logger.info(`Realtime: broadcast seats:update (${seats.length} seats)`);
+    } catch (error) {
+        logger.error(`Realtime: broadcast failed - ${error.message}`);
+    }
+}
+
 async function connectDatabase() {
     try {
         pool = new sql.ConnectionPool(sqlConfig);
         await pool.connect();
         logger.success('Kết nối SQL Server thành công!');
+
+        // First broadcast so connected clients can sync instantly
+        broadcastSeatsUpdate().catch(() => {});
         return pool;
     } catch (error) {
         logger.error(`Lỗi kết nối: ${error.message}`);
         process.exit(1);
     }
 }
+
+// ============================================================================
+// SOCKET.IO REALTIME
+// ============================================================================
+
+io.on('connection', (socket) => {
+    logger.info(`Realtime: client connected (${socket.id})`);
+
+    // Send current seats immediately to the newly connected client
+    fetchSeatsForShowTime(1)
+        .then((seats) => socket.emit('seats:update', seats))
+        .catch((error) => logger.error(`Realtime: initial sync failed - ${error.message}`));
+
+    socket.on('disconnect', (reason) => {
+        logger.info(`Realtime: client disconnected (${socket.id}) - ${reason}`);
+    });
+});
 
 // ============================================================================
 // API ENDPOINTS
@@ -86,29 +157,9 @@ async function connectDatabase() {
  */
 app.get('/api/seats', async (req, res) => {
     try {
-        if (!pool) {
-            return res.status(500).json({ error: 'Database not connected' });
-        }
-
-        const request = pool.request();
-        const result = await request.query(`
-            SELECT 
-                S.SeatID,
-                S.SeatName,
-                S.[Status],
-                S.UserIDHeld,
-                U.UserName,
-                ST.MovieName,
-                ST.ShowTimeID
-            FROM Seats S
-            LEFT JOIN Users U ON S.UserIDHeld = U.UserID
-            LEFT JOIN ShowTimes ST ON S.ShowTimeID = ST.ShowTimeID
-            WHERE ST.ShowTimeID = 1
-            ORDER BY S.SeatID
-        `);
-
-        logger.info(`Lấy ${result.recordset.length} ghế`);
-        return res.json(result.recordset);
+        const seats = await fetchSeatsForShowTime(1);
+        logger.info(`Lấy ${seats.length} ghế`);
+        return res.json(seats);
 
     } catch (error) {
         logger.error(`GET /api/seats: ${error.message}`);
@@ -153,6 +204,10 @@ app.post('/api/hold', async (req, res) => {
         const result = await request.execute('sp_HoldSeat_Demo');
 
         logger.success(`Ghế ${seatId} được giữ bởi User ${userId}`);
+
+        // Realtime update to all clients (do not block response)
+        broadcastSeatsUpdate().catch(() => {});
+
         return res.json({
             success: true,
             message: 'Ghế được giữ thành công!',
@@ -227,6 +282,10 @@ app.post('/api/payment', async (req, res) => {
         const result = await request.execute('sp_Payment');
 
         logger.success(`Thanh toán ghế ${seatId} cho User ${userId}`);
+
+        // Realtime update to all clients (do not block response)
+        broadcastSeatsUpdate().catch(() => {});
+
         return res.json({
             success: true,
             message: 'Thanh toán thành công!',
@@ -293,7 +352,7 @@ async function startServer() {
         await connectDatabase();
 
         // Khởi động server
-        app.listen(PORT, () => {
+        httpServer.listen(PORT, () => {
             logger.success(`Server chạy trên http://localhost:${PORT}`);
             logger.info('Sẵn sàng nhận request!');
         });
