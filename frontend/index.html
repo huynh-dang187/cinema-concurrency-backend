@@ -567,6 +567,8 @@
         state.selectedSeatName = seatName;
         document.querySelector(`[data-seat-id="${seatID}"]`).classList.add('my-selected');
         btnHold.disabled = false;
+        // Khi đổi ghế, luôn quay về luồng chuẩn: phải "Giữ" trước rồi mới "Thanh toán"
+        btnPayment.disabled = true;
         log(`Đã chọn ghế: ${seatName} (ID: ${seatID})`, 'info');
     }
 
@@ -656,6 +658,8 @@
         btnPayment.disabled = true;
         log('Đã làm mới. Chọn ghế mới để tiếp tục.', 'info');
         showToast('Đã làm mới!', 'info');
+        // Sync lại UI với trạng thái ghế trên server (phòng trường hợp DOM bị đổi class tạm thời)
+        fetchSeats();
     }
 
     chkSafeMode.addEventListener('change', (e) => {
